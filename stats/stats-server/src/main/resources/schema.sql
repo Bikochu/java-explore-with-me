@@ -5,3 +5,6 @@ uri VARCHAR(255) NOT NULL,
 ip VARCHAR(15) NOT NULL,
 created TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
+
+CREATE INDEX idx_hits_uri ON hits (uri);
+CREATE INDEX idx_hits_created ON hits (created);
