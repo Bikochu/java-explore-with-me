@@ -23,9 +23,25 @@ services:
       - POSTGRES_USER=ivan
       - POSTGRES_PASSWORD=anypass
 
-  #ewm-service:
-  #  ports:
-  #    - "8080:8080"
+  ewm-service:
+    build:
+      context: ./main
+      dockerfile: Dockerfile
+    image: ewm-main-image
+    container_name: ewm-main-container
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ewm-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/explore-with-me-main
 
-  #ewm-db:
-  #  image: postgres:15-alpine
+  ewm-db:
+    image: postgres:15-alpine
+    container_name: main-db-container
+    ports:
+      - "6542:5432"
+    environment:
+      - POSTGRES_DB=explore-with-me-main
+      - POSTGRES_USER=ivan
+      - POSTGRES_PASSWORD=anypass
