@@ -39,6 +39,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto addUser(UserDto userDto) {
+        if (userRepository.existsByName(userDto.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User name is already used.");
+        }
         return UserMapper.toUserDto(userRepository.save(UserMapper.toUser(userDto)));
     }
 

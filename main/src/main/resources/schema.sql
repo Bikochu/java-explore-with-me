@@ -57,6 +57,6 @@ created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 event_id BIGINT NOT NULL,
 requester_id BIGINT NOT NULL,
 status VARCHAR(50),
-FOREIGN KEY (event_id) REFERENCES events(id),
-FOREIGN KEY (requester_id) REFERENCES users(id)
+FOREIGN KEY (event_id) REFERENCES events(id) ON,
+FOREIGN KEY (requester_id) REFERENCES users(id) ON
 );

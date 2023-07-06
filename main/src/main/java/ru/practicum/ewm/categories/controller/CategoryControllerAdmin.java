@@ -29,20 +29,20 @@ public class CategoryControllerAdmin {
         return newCategoryDto;
     }
 
-    @PatchMapping("/{categoryId}")
-    public CategoryDto updateCategory(@PathVariable Long categoryId,
+    @PatchMapping("/{catId}")
+    public CategoryDto updateCategory(@PathVariable Long catId,
                                       @RequestBody @Valid CategoryDto categoryDto) {
-        log.info("Получаем запрос на обновление: categoryId={}, categoryDto={}", categoryId, categoryDto);
-        CategoryDto newCategoryDto = categoryService.updateCategory(categoryId, categoryDto);
+        log.info("Получаем запрос на обновление: categoryId={}, categoryDto={}", catId, categoryDto);
+        CategoryDto newCategoryDto = categoryService.updateCategory(catId, categoryDto);
         log.info("Возвращаем обновленную категорию: {}", newCategoryDto);
         return newCategoryDto;
     }
 
-    @DeleteMapping("/{categoryId}")
+    @DeleteMapping("/{catId}")
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
-    public void deleteCategory(@PathVariable Long categoryId) {
-        log.info("Получаем запрос на удаление категории: categoryId={}", categoryId);
-        categoryService.deleteCategory(categoryId);
-        log.info("Категория categoryId={} удалена.", categoryId);
+    public void deleteCategory(@PathVariable Long catId) {
+        log.info("Получаем запрос на удаление категории: categoryId={}", catId);
+        categoryService.deleteCategory(catId);
+        log.info("Категория categoryId={} удалена.", catId);
     }
 }

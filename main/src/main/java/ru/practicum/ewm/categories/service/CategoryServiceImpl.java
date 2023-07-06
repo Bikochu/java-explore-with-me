@@ -52,14 +52,22 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto updateCategory(Long categoryId, CategoryDto categoryDto) {
         Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found."));
+        if (categoryRepository.existsByName(categoryDto.getName()) && !categoryDto.getName().equals(category.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Name is already used.");
+        }
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found.");
+        }
         category.setName(categoryDto.getName());
         categoryRepository.save(category);
         return CategoryMapper.toCategoryDto(category);
     }
 
     @Override
-    public void deleteCategory(Long categoryId) {
-        categoryRepository.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found."));
-        categoryRepository.deleteById(categoryId);
+    public void deleteCategory(Long catId) {
+        if (!categoryRepository.existsById(catId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Category not found.");
+        }
+        categoryRepository.deleteById(catId);
     }
 }
