@@ -24,8 +24,8 @@ public class CompilationControllerPublic {
 
     @GetMapping
     public List<CompilationDto> getCompilations(@RequestParam(required = false) Boolean pined,
-                                                @RequestParam(value = "from", defaultValue = "0") @PositiveOrZero Integer from,
-                                                @RequestParam(value = "size", defaultValue = "10") @Positive Integer size) {
+                                                @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                                @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Получаем запрос на список подборки: pined={}, from={}, size={}", pined, from, size);
         List<CompilationDto> compilationDtoList = compilationService.getCompilations(pined, from, size);
         log.info("Возвращаем {} элемент(а/ов)", compilationDtoList.size());

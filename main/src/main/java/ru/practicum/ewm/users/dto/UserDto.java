@@ -1,26 +1,28 @@
 package ru.practicum.ewm.users.dto;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 @EqualsAndHashCode(of = "email")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDto {
     Long id;
 
-    @NotNull(message = "User name can't be Null")
+    @Size(min = 2, max = 250)
     @NotBlank(message = "User name can't be Blank")
     String name;
 
-    @NotNull(message = "User email can't be Null")
-    @NotBlank(message = "user email can't be Blank")
+    @Size(min = 6, max = 254)
+    @NotBlank(message = "User email can't be Blank")
     @Email(message = "Invalid email format")
     String email;
 }

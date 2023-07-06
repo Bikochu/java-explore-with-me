@@ -8,11 +8,11 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-@Data
 @Entity
+@Table(name = "users")
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "users")
 @EqualsAndHashCode(of = "email")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {

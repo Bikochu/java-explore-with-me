@@ -11,31 +11,31 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "events")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "events")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false)
+    @Column(name = "annotation", length = 2000, nullable = false)
     String annotation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     Category category;
 
-    @Column(nullable = false)
+    @Column(name = "confirmed_request", nullable = false)
     Integer confirmedRequests;
 
     @Column(name = "created_on", nullable = false, columnDefinition = "TIMESTAMP")
     LocalDateTime createdOn;
 
-    @Column(nullable = false)
+    @Column(length = 7000, nullable = false)
     String description;
 
     @Column(name = "event_date", nullable = false, columnDefinition = "TIMESTAMP")
@@ -62,10 +62,10 @@ public class Event {
     Boolean requestModeration;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(length = 10, nullable = false)
     StatePublic state;
 
-    @Column(nullable = false)
+    @Column(length = 120, nullable = false)
     String title;
 
     @Column

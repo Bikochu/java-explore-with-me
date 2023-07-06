@@ -48,11 +48,12 @@ public class HitClient extends BaseClient {
     }
 
     public ResponseEntity<Object> addHit(HttpServletRequest request) {
-        HitDto hitDto = new HitDto();
-        hitDto.setApp((String) request.getAttribute("app_name"));
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setTimestamp(LocalDateTime.now());
+        HitDto hitDto = HitDto.builder()
+                .app((String) request.getAttribute("app_name"))
+                .uri(request.getRequestURI())
+                .ip(request.getRemoteAddr())
+                .timestamp(LocalDateTime.now())
+                .build();
         return post("/hit", hitDto);
     }
 }

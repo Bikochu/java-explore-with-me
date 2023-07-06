@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class CompilationMapper {
     public static Compilation toCompilation(NewCompilationDto newCompilationDto) {
         return Compilation.builder()
-                .pined(newCompilationDto.getPined())
+                .pinned(newCompilationDto.getPinned())
                 .title(newCompilationDto.getTitle())
                 .build();
     }
@@ -19,7 +19,7 @@ public class CompilationMapper {
         return new CompilationDto(
                 compilation.getEvents().stream().map(EventMapper::toEventShortDto).collect(Collectors.toList()),
                 compilation.getId(),
-                compilation.getPined(),
+                compilation.getPinned(),
                 compilation.getTitle()
         );
     }

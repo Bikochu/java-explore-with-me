@@ -18,6 +18,7 @@ import ru.practicum.ewm.compilations.repository.CompilationRepository;
 import ru.practicum.ewm.events.repository.EventRepository;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,11 +34,15 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto addCompilation(NewCompilationDto newCompilationDto) {
-        newCompilationDto.setPined(newCompilationDto.getPined() != null ? newCompilationDto.getPined() : false);
+        newCompilationDto.setPinned(newCompilationDto.getPinned() != null ? newCompilationDto.getPinned() : false);
         Compilation compilation = CompilationMapper.toCompilation(newCompilationDto);
-        compilation.setEvents(newCompilationDto.getEvents().stream()
-                .flatMap(ids -> eventRepository.findAllById(Collections.singleton(ids)).stream())
-                .collect(Collectors.toSet()));
+        if (newCompilationDto.getEvents() != null) {
+            compilation.setEvents(newCompilationDto.getEvents().stream()
+                    .flatMap(ids -> eventRepository.findAllById(Collections.singleton(ids)).stream())
+                    .collect(Collectors.toSet()));
+        } else {
+            compilation.setEvents(new HashSet<>());
+        }
         return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
     }
 
@@ -49,7 +54,7 @@ public class CompilationServiceImpl implements CompilationService {
                     .flatMap(ids -> eventRepository.findAllById(Collections.singleton(ids)).stream())
                     .collect(Collectors.toSet()));
         }
-        compilation.setPined(updateCompilationRequest.getPined() != null ? updateCompilationRequest.getPined() : compilation.getPined());
+        compilation.setPinned(updateCompilationRequest.getPined() != null ? updateCompilationRequest.getPined() : compilation.getPinned());
         compilation.setTitle(updateCompilationRequest.getTitle() != null ? updateCompilationRequest.getTitle() : compilation.getTitle());
         return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
     }
@@ -70,6 +75,10 @@ public class CompilationServiceImpl implements CompilationService {
     public List<CompilationDto> getCompilations(Boolean pined, Integer from, Integer size) {
         int pageNumber = (int) Math.ceil((double) from / size);
         Pageable pageable = PageRequest.of(pageNumber, size);
-        return compilationRepository.findAllByPined(pined, pageable).map(CompilationMapper::toCompilationDto).getContent();
+        if (pined != null) {
+            return compilationRepository.findAllByPinned(pined, pageable).map(CompilationMapper::toCompilationDto).toList();
+        } else {
+            return compilationRepository.findAll(pageable).map(CompilationMapper::toCompilationDto).toList();
+        }
     }
 }

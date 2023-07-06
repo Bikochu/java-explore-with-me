@@ -9,12 +9,12 @@ import ru.practicum.ewm.users.model.User;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "participation_request")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "participation_request")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ParticipationRequest {
     @Id

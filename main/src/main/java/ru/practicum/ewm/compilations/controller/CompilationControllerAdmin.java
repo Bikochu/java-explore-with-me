@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.compilations.dto.CompilationDto;
 import ru.practicum.ewm.compilations.dto.NewCompilationDto;
@@ -21,6 +22,7 @@ public class CompilationControllerAdmin {
     CompilationService compilationService;
 
     @PostMapping
+    @ResponseStatus(value = HttpStatus.CREATED)
     public CompilationDto addCompilation(@RequestBody @Valid NewCompilationDto newCompilationDto) {
         log.info("Получаем запрос на добавление подборки: newCompilationDto={}", newCompilationDto);
         CompilationDto compilationDto = compilationService.addCompilation(newCompilationDto);
@@ -30,7 +32,7 @@ public class CompilationControllerAdmin {
 
     @PatchMapping("/{compilationId}")
     public CompilationDto updateCompilation(@PathVariable Long compilationId,
-                                            @RequestBody UpdateCompilationRequest compilationRequest) {
+                                            @RequestBody @Valid UpdateCompilationRequest compilationRequest) {
         log.info("Получаем запрос на обновление подборки: updateCompilationRequest={}", compilationRequest);
         CompilationDto compilationDto = compilationService.updateCompilation(compilationId, compilationRequest);
         log.info("Возвращаем обновленную подборку: compilationDto={}", compilationDto);
@@ -38,6 +40,7 @@ public class CompilationControllerAdmin {
     }
 
     @DeleteMapping("/{compilationId}")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void deleteCompilation(@PathVariable long compilationId) {
         log.info("Получаем запрос на удаление подборки: compilationId={}", compilationId);
         compilationService.deleteCompilation(compilationId);

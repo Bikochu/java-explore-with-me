@@ -41,7 +41,8 @@ public class EventControllerPublic {
                                          HttpServletRequest request) {
         log.info("Получаем запрос на получение списка: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
-        log.info("Создаем статистические данные из запроса: request={}", request);
+        request.setAttribute("app_name", "main application");
+        log.info("Создаем {} запрос к {} от {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
         hitClient.addHit(request);
         List<EventShortDto> eventShortDtoList = eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request);
         log.info("Возвращаем {} элемент(а/ов)", eventShortDtoList.size());
@@ -52,7 +53,8 @@ public class EventControllerPublic {
     public EventFullDto getEventById(@PathVariable Long eventId,
                                      HttpServletRequest request) {
         log.info("Получаем запрос на получение эвента: eventId={}", eventId);
-        log.info("Создаем статистические данные из запроса: request={}", request);
+        request.setAttribute("app_name", "main application");
+        log.info("Создаем {} запрос к {} от {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
         hitClient.addHit(request);
         EventFullDto eventFullDto = eventService.getEventById(eventId, request);
         log.info("Возвращаем eventFullDto={}", eventFullDto);

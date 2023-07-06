@@ -4,8 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.events.dto.EventShortDto;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
@@ -17,12 +15,9 @@ public class CompilationDto {
 
     List<EventShortDto> events;
 
-    @NotBlank
     Long id;
 
-    @NotNull
-    Boolean pined;
+    Boolean pinned;
 
-    @NotBlank
     String title;
 }

@@ -10,8 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.ewm.categories.mapper.CategoryMapper;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
+import ru.practicum.ewm.categories.service.CategoryService;
 import ru.practicum.ewm.events.dto.*;
 import ru.practicum.ewm.events.enums.StateAdmin;
 import ru.practicum.ewm.events.enums.StatePrivate;
@@ -20,6 +22,8 @@ import ru.practicum.ewm.events.mapper.EventMapper;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.events.repository.EventRepository;
 import ru.practicum.ewm.locations.mapper.LocationMapper;
+import ru.practicum.ewm.locations.model.Location;
+import ru.practicum.ewm.locations.repository.LocationRepository;
 import ru.practicum.ewm.stats.client.hit.HitClient;
 import ru.practicum.ewm.stats.dto.StatsDto;
 import ru.practicum.ewm.users.model.User;
@@ -34,7 +38,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class EventServiceImpl implements EventService {
 
     EventRepository eventRepository;
@@ -43,15 +47,24 @@ public class EventServiceImpl implements EventService {
 
     CategoryRepository categoryRepository;
 
+    CategoryService categoryService;
+
+    LocationRepository locationRepository;
+
     HitClient hitClient;
+
 
     @Override
     public EventFullDto addEvent(Long userId, NewEventDto newEventDto) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
         Category category = categoryRepository.findById(newEventDto.getCategory()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found."));
+        Location location = LocationMapper.toLocation(newEventDto.getLocation());
+        location = locationRepository.existsByLatAndLon(location.getLat(), location.getLon())
+                ? locationRepository.findByLatAndLon(location.getLat(), location.getLon()) : locationRepository.save(location);
         Event event = EventMapper.toEvent(newEventDto);
         event.setInitiator(user);
         event.setCategory(category);
+        event.setLocation(location);
         event.setCreatedOn(LocalDateTime.now());
         event.setState(StatePublic.PENDING);
         event.setConfirmedRequests(0);
@@ -61,7 +74,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventFullByOwner(Long userId, Long eventId) {
-        return EventMapper.toEventFullDto(eventRepository.findByIdAndInitiatorId(userId, eventId));
+        return EventMapper.toEventFullDto(eventRepository.findByIdAndInitiatorId(eventId, userId));
     }
 
     @Override
@@ -73,20 +86,48 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto updateEventByOwner(Long userId, Long eventId, UpdateEventUserRequest eventUserRequest) {
-        Event event = eventRepository.findByIdAndInitiatorId(userId, eventId);
-        Category category = categoryRepository.findById(eventUserRequest.getCategory()).orElse(null);
-        event.setCategory(category);
-        event.setAnnotation(eventUserRequest.getAnnotation() != null ? eventUserRequest.getAnnotation() : null);
-        event.setDescription(eventUserRequest.getDescription() != null ? eventUserRequest.getDescription() : null);
-        event.setEventDate(eventUserRequest.getEventDate() != null ? eventUserRequest.getEventDate() : null);
-        event.setLocation(eventUserRequest.getLocation() != null ? LocationMapper.toLocation(eventUserRequest.getLocation()) : null);
-        event.setPaid(eventUserRequest.getPaid() != null ? eventUserRequest.getPaid() : null);
-        event.setParticipantLimit(eventUserRequest.getParticipantLimit() != null ? eventUserRequest.getParticipantLimit() : null);
-        event.setRequestModeration(eventUserRequest.getRequestModeration() != null ? eventUserRequest.getRequestModeration() : null);
-        event.setTitle(event.getTitle() != null ? eventUserRequest.getTitle() : null);
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId);
+        if (event.getState() == StatePublic.PUBLISHED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Can't change, because it already Published.");
+        }
+        if (eventUserRequest.getCategory() != null) {
+            event.setCategory(CategoryMapper.toCategory(categoryService.getCategoryById(eventUserRequest.getCategory())));
+        }
+        if (eventUserRequest.getAnnotation() != null) {
+            event.setAnnotation(eventUserRequest.getAnnotation());
+        }
+        if (eventUserRequest.getDescription() != null) {
+            event.setDescription(eventUserRequest.getDescription());
+        }
+        if (eventUserRequest.getEventDate() != null) {
+            event.setEventDate(eventUserRequest.getEventDate());
+        }
+        if (eventUserRequest.getLocation() != null) {
+            Location location = LocationMapper.toLocation(eventUserRequest.getLocation());
+            location = locationRepository.existsByLatAndLon(location.getLat(), location.getLon())
+                    ? locationRepository.findByLatAndLon(location.getLat(), location.getLon())
+                    : locationRepository.save(location);
+            event.setLocation(location);
+        }
+        if (eventUserRequest.getPaid() != null) {
+            event.setPaid(eventUserRequest.getPaid());
+        }
+        if (eventUserRequest.getParticipantLimit() != null) {
+            event.setParticipantLimit(eventUserRequest.getParticipantLimit());
+        }
+        if (eventUserRequest.getRequestModeration() != null) {
+            event.setRequestModeration(eventUserRequest.getRequestModeration());
+        }
+        if (eventUserRequest.getTitle() != null) {
+            event.setTitle(eventUserRequest.getTitle());
+        }
         if (eventUserRequest.getStateAction() != null) {
             StatePrivate statePrivate = StatePrivate.valueOf(eventUserRequest.getStateAction());
-            event.setState(statePrivate == StatePrivate.CANCEL_REVIEW ? StatePublic.CANCELED : StatePublic.PENDING);
+            if (statePrivate.equals(StatePrivate.SEND_TO_REVIEW)) {
+                event.setState(StatePublic.PENDING);
+            } else if (statePrivate.equals(StatePrivate.CANCEL_REVIEW)) {
+                event.setState(StatePublic.CANCELED);
+            }
         }
         return EventMapper.toEventFullDto(eventRepository.save(event));
     }
@@ -94,19 +135,53 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest eventAdminRequest) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
-        Category category = categoryRepository.findById(eventAdminRequest.getCategory()).orElse(null);
-        event.setCategory(category);
-        event.setAnnotation(eventAdminRequest.getAnnotation() != null ? eventAdminRequest.getAnnotation() : null);
-        event.setDescription(eventAdminRequest.getDescription() != null ? eventAdminRequest.getDescription() : null);
-        event.setEventDate(eventAdminRequest.getEventDate() != null ? eventAdminRequest.getEventDate() : null);
-        event.setLocation(eventAdminRequest.getLocation() != null ? LocationMapper.toLocation(eventAdminRequest.getLocation()) : null);
-        event.setPaid(eventAdminRequest.getPaid() != null ? eventAdminRequest.getPaid() : null);
-        event.setParticipantLimit(eventAdminRequest.getParticipantLimit() != null ? eventAdminRequest.getParticipantLimit() : null);
-        event.setRequestModeration(eventAdminRequest.getRequestModeration() != null ? eventAdminRequest.getRequestModeration() : null);
-        event.setTitle(event.getTitle() != null ? eventAdminRequest.getTitle() : null);
+        if (eventAdminRequest.getStateAction() != null) {
+            StateAdmin stateAdmin = StateAdmin.valueOf(eventAdminRequest.getStateAction());
+            if (!event.getState().equals(StatePublic.PENDING) && stateAdmin.equals(StateAdmin.PUBLISH_EVENT)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Event is not Pending");
+            }
+            if (event.getState().equals(StatePublic.PUBLISHED) && stateAdmin.equals(StateAdmin.REJECT_EVENT)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Event is not Published yet");
+            }
+        }
+        if (eventAdminRequest.getCategory() != null) {
+            event.setCategory(CategoryMapper.toCategory(categoryService.getCategoryById(eventAdminRequest.getCategory())));
+        }
+        if (eventAdminRequest.getAnnotation() != null) {
+            event.setAnnotation(eventAdminRequest.getAnnotation());
+        }
+        if (eventAdminRequest.getDescription() != null) {
+            event.setDescription(eventAdminRequest.getDescription());
+        }
+        if (eventAdminRequest.getEventDate() != null) {
+            event.setEventDate(eventAdminRequest.getEventDate());
+        }
+        if (eventAdminRequest.getLocation() != null) {
+            Location location = LocationMapper.toLocation(eventAdminRequest.getLocation());
+            location = locationRepository.existsByLatAndLon(location.getLat(), location.getLon())
+                    ? locationRepository.findByLatAndLon(location.getLat(), location.getLon())
+                    : locationRepository.save(location);
+            event.setLocation(location);
+        }
+        if (eventAdminRequest.getPaid() != null) {
+            event.setPaid(eventAdminRequest.getPaid());
+        }
+        if (eventAdminRequest.getParticipantLimit() != null) {
+            event.setParticipantLimit(eventAdminRequest.getParticipantLimit());
+        }
+        if (eventAdminRequest.getRequestModeration() != null) {
+            event.setRequestModeration(eventAdminRequest.getRequestModeration());
+        }
+        if (eventAdminRequest.getTitle() != null) {
+            event.setTitle(eventAdminRequest.getTitle());
+        }
         if (eventAdminRequest.getStateAction() != null) {
             StateAdmin statePrivate = StateAdmin.valueOf(eventAdminRequest.getStateAction());
-            event.setState(statePrivate == StateAdmin.REJECT_EVENT ? StatePublic.CANCELED : StatePublic.PUBLISHED);
+            if (statePrivate.equals(StateAdmin.PUBLISH_EVENT)) {
+                event.setState(StatePublic.PUBLISHED);
+            } else if (statePrivate.equals(StateAdmin.REJECT_EVENT)) {
+                event.setState(StatePublic.CANCELED);
+            }
         }
         return EventMapper.toEventFullDto(eventRepository.save(event));
     }
@@ -202,9 +277,10 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
-        if (event.getState().equals(StatePublic.PUBLISHED)) {
+        if (event.getState() != StatePublic.PUBLISHED) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found.");
         }
+        setViewsOfEvents(List.of(event));
         event.setViews(event.getViews() + 1);
         return EventMapper.toEventFullDto(event);
     }
@@ -228,5 +304,6 @@ public class EventServiceImpl implements EventService {
             Long views = (currentViewStats != null) ? currentViewStats.getHits() : 0;
             event.setViews(views);
         }
+        eventRepository.saveAll(events);
     }
 }

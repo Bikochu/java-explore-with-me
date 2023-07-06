@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.events.dto.EventFullDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
@@ -32,6 +33,7 @@ public class EventControllerPrivate {
     RequestService requestService;
 
     @PostMapping
+    @ResponseStatus(value = HttpStatus.CREATED)
     public EventFullDto addEvent(@PathVariable Long userId,
                                  @RequestBody @Valid NewEventDto newEventDto) {
         log.info("Получаем запрос на добавление события: userId={}, newEventDto={}", userId, newEventDto);
@@ -44,7 +46,7 @@ public class EventControllerPrivate {
     List<EventShortDto> getEventShortByOwner(@PathVariable Long userId,
                                              @RequestParam(value = "from", defaultValue = "0") @PositiveOrZero Integer from,
                                              @RequestParam(value = "size", defaultValue = "10") @Positive Integer size) {
-        log.info("Получаем запрос на списк эвентов от пользователя: userId={}, from={}, size={}", userId, from, size);
+        log.info("Получаем запрос на список эвентов от пользователя: userId={}, from={}, size={}", userId, from, size);
         List<EventShortDto> eventShortDtoList = eventService.getEventsShortByOwner(userId, from, size);
         log.info("Возвращаем {} элемент(а/ов)", eventShortDtoList.size());
         return eventShortDtoList;
@@ -59,7 +61,7 @@ public class EventControllerPrivate {
     }
 
     @PatchMapping("/{eventId}")
-    public EventFullDto updateEventByOwner(@PathVariable Long userId, @PathVariable Long eventId, @RequestBody UpdateEventUserRequest eventUserRequest) {
+    public EventFullDto updateEventByOwner(@PathVariable Long userId, @PathVariable Long eventId, @RequestBody @Valid UpdateEventUserRequest eventUserRequest) {
         log.info("Получаем запрос на обновление: userId={}, eventId={}, updateEventUserRequest={}", userId, eventId, eventUserRequest);
         EventFullDto eventFullDto = eventService.updateEventByOwner(userId, eventId, eventUserRequest);
         log.info("Возвращаем обновленный эвент: eventFullDto={}", eventFullDto);

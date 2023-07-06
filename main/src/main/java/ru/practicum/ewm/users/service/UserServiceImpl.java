@@ -11,9 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.ewm.users.dto.UserDto;
 import ru.practicum.ewm.users.mapper.UserMapper;
+import ru.practicum.ewm.users.model.User;
 import ru.practicum.ewm.users.repository.UserRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class UserServiceImpl implements UserService {
         Pageable pageable = PageRequest.of(pageNumber, size);
 
         if (userIds != null) {
-            return userRepository.findAllByIdIn(userIds, pageable).map(UserMapper::toUserDto).getContent();
+            return userRepository.findAllByIdIn(userIds).stream().map(UserMapper::toUserDto).collect(Collectors.toList());
         } else {
             return userRepository.findAll(pageable).map(UserMapper::toUserDto).getContent();
         }
@@ -42,7 +44,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long userId) {
-        userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
-        userRepository.deleteById(userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
+        userRepository.deleteById(user.getId());
     }
 }

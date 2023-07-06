@@ -8,7 +8,6 @@ import ru.practicum.ewm.events.enums.StatePublic;
 import ru.practicum.ewm.locations.dto.LocationDto;
 import ru.practicum.ewm.users.dto.UserShortDto;
 
-import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -33,31 +32,29 @@ public class EventFullDto {
 
     String description;
 
-    @NotBlank
-    @Future
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventDate;
+    LocalDateTime eventDate;
 
     @NotNull
-    private UserShortDto initiator;
+    UserShortDto initiator;
 
     @NotNull
-    private LocationDto location;
+    LocationDto location;
 
     @NotBlank
-    private Boolean paid;
+    Boolean paid;
 
-    private Integer participantLimit;
+    Integer participantLimit;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime publishedOn;
+    LocalDateTime publishedOn;
 
-    private Boolean requestModeration;
+    Boolean requestModeration;
 
-    private StatePublic state;
+    StatePublic state;
 
     @NotBlank
-    private String title;
+    String title;
 
-    private Long views;
+    Long views;
 }

@@ -7,12 +7,12 @@ import ru.practicum.ewm.events.model.Event;
 import javax.persistence.*;
 import java.util.Set;
 
+@Entity
+@Table(name = "compilations")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "compilations")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Compilation {
     @Id
@@ -22,8 +22,8 @@ public class Compilation {
     @Column(name = "title", nullable = false)
     String title;
 
-    @Column(name = "pined")
-    Boolean pined;
+    @Column(name = "pinned")
+    Boolean pinned;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "compilation_events", joinColumns = @JoinColumn(name = "compilation_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))

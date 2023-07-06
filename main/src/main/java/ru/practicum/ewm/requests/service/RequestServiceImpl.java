@@ -54,8 +54,8 @@ public class RequestServiceImpl implements RequestService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Event is not published yet.");
         }
 
-        if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No more space for requests.");
+        if (!event.getParticipantLimit().equals(0) && event.getParticipantLimit() <= event.getConfirmedRequests()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No more space for request.");
         }
 
         ParticipationRequest request = ParticipationRequest.builder()
@@ -65,7 +65,7 @@ public class RequestServiceImpl implements RequestService {
                 .status(RequestStatus.PENDING)
                 .build();
 
-        if (!event.getRequestModeration()) {
+        if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             request.setStatus(RequestStatus.CONFIRMED);
             event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
@@ -88,7 +88,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        ParticipationRequest request = requestRepository.findByIdAndRequesterId(userId, requestId);
+        ParticipationRequest request = requestRepository.findByIdAndRequesterId(requestId, userId);
         request.setStatus(RequestStatus.CANCELED);
         return RequestMapper.toParticipationRequestDto(requestRepository.save(request));
     }
