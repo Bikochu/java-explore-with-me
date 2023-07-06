@@ -26,7 +26,7 @@ public class HitClient extends BaseClient {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    public HitClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
+    public HitClient(@Value("${stats-service.url}") String serverUrl, RestTemplateBuilder builder) {
         super(
                 builder
                         .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
