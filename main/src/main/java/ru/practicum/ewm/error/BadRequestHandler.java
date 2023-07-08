@@ -9,18 +9,16 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestControllerAdvice
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-@Slf4j
 public class BadRequestHandler {
-    private static final String REASON_BAD_REQUEST = "Incorrectly made request.";
 
     @ExceptionHandler
-    public ApiError handleNotFoundException(final MethodArgumentTypeMismatchException e) {
-        String message = e.getMessage();
+    public ApiError handleBadRequestException(final MethodArgumentTypeMismatchException e) {
         return ApiError.builder()
-                .message(message)
-                .reason(REASON_BAD_REQUEST)
+                .message(e.getMessage())
+                .reason("Incorrectly request.")
                 .status(HttpStatus.BAD_REQUEST.name())
                 .timestamp(LocalDateTime.now())
                 .build();

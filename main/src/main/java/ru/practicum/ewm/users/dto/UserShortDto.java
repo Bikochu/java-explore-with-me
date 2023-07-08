@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserShortDto {
+    @NotNull(message = "UserId can't be null.")
     Long id;
 
     @NotNull(message = "User name can't be Null")

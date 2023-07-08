@@ -9,18 +9,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestControllerAdvice
 @ResponseStatus(HttpStatus.CONFLICT)
-@Slf4j
 public class ConflictHandler {
-    private static final String REASON_INTEGRITY_CONFLICT = "Integrity constraint has been violated.";
 
     @ExceptionHandler
-    public ApiError handleNotFoundException(final DataIntegrityViolationException e) {
-        String message = e.getMessage();
+    public ApiError handleConflictException(final DataIntegrityViolationException e) {
         return ApiError.builder()
-                .message(message)
-                .reason(REASON_INTEGRITY_CONFLICT)
+                .message(e.getMessage())
+                .reason("Integrity constraint has been violated.")
                 .status(HttpStatus.CONFLICT.name())
                 .timestamp(LocalDateTime.now())
                 .build();

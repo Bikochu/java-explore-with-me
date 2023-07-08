@@ -5,7 +5,7 @@ import ru.practicum.ewm.locations.model.Location;
 
 public interface LocationRepository extends JpaRepository<Location, Long> {
 
-    boolean existsByLatAndLon(Float lat, Float lon);
+    boolean existsByLatAndLon(Double lat, Double lon);
 
-    Location findByLatAndLon(Float lat, Float lon);
+    Location findByLatAndLon(Double lat, Double lon);
 }
