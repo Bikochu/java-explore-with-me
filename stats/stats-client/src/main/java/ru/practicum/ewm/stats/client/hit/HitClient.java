@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,13 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@PropertySource(value = "classpath:stats-application.properties")
 public class HitClient extends BaseClient {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    public HitClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
+    public HitClient(@Value("${stats-service.url}") String serverUrl, RestTemplateBuilder builder) {
         super(
                 builder
                         .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
@@ -46,11 +48,12 @@ public class HitClient extends BaseClient {
     }
 
     public ResponseEntity<Object> addHit(HttpServletRequest request) {
-        HitDto hitDto = new HitDto();
-        hitDto.setApp((String) request.getAttribute("app_name"));
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setTimestamp(LocalDateTime.now());
+        HitDto hitDto = HitDto.builder()
+                .app((String) request.getAttribute("app_name"))
+                .uri(request.getRequestURI())
+                .ip(request.getRemoteAddr())
+                .timestamp(LocalDateTime.now())
+                .build();
         return post("/hit", hitDto);
     }
 }
