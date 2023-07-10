@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.events.dto.EventFullDto;
+import ru.practicum.ewm.events.dto.EventRatedDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import ru.practicum.ewm.events.service.EventService;
 import ru.practicum.ewm.stats.client.hit.HitClient;
@@ -59,5 +60,27 @@ public class EventControllerPublic {
         EventFullDto eventFullDto = eventService.getEventById(eventId, request);
         log.info("Возвращаем eventFullDto={}", eventFullDto);
         return eventFullDto;
+    }
+
+    @GetMapping("/rating")
+    public List<EventRatedDto> getRatedEvents(
+                                              @RequestParam(required = false) List<Long> categories,
+                                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+                                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+                                              @RequestParam(defaultValue = "false") Boolean onlyAvailable,
+                                              @RequestParam(defaultValue = "EVENT_DATE") String sort,
+                                              @RequestParam(defaultValue = "HIGH") String rateSort,
+                                              @RequestParam(value = "from", defaultValue = "0") @PositiveOrZero Integer from,
+                                              @RequestParam(value = "size", defaultValue = "10") @Positive Integer size,
+                                              HttpServletRequest request) {
+
+        log.info("Получаем запрос на получение списка рейтинга эвентов: categories={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, rateSort={} ,from={}, size={}",
+                categories, rangeStart, rangeEnd, onlyAvailable, sort, rateSort, from, size);
+        request.setAttribute("app_name", "main application");
+        log.info("Создаем {} запрос к {} от {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
+        hitClient.addHit(request);
+        List<EventRatedDto> ratedDtoList = eventService.getRatedEvents(categories, rangeStart, rangeEnd, onlyAvailable, sort, rateSort, from, size, request);
+        log.info("Возвращаем {} элетент(а/ов).", ratedDtoList.size());
+        return ratedDtoList;
     }
 }

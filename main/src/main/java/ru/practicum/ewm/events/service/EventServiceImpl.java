@@ -15,6 +15,7 @@ import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
 import ru.practicum.ewm.categories.service.CategoryService;
 import ru.practicum.ewm.events.dto.*;
+import ru.practicum.ewm.events.enums.RateSort;
 import ru.practicum.ewm.events.enums.StateAdmin;
 import ru.practicum.ewm.events.enums.StatePrivate;
 import ru.practicum.ewm.events.enums.StatePublic;
@@ -29,6 +30,7 @@ import ru.practicum.ewm.stats.dto.StatsDto;
 import ru.practicum.ewm.users.model.User;
 import ru.practicum.ewm.users.repository.UserRepository;
 
+import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -283,6 +285,42 @@ public class EventServiceImpl implements EventService {
         setViewsOfEvents(List.of(event));
         event.setViews(event.getViews() + 1);
         return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public List<EventRatedDto> getRatedEvents(List<Long> categories, LocalDateTime rangeStart,
+                                              LocalDateTime rangeEnd, Boolean onlyAvailable,
+                                              String sort, String rateSort, Integer from, Integer size,
+                                              HttpServletRequest request) {
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong timestamps of START or END.");
+        }
+        int pageNumber = (int) Math.ceil((double) from / size);
+        Pageable pageable = PageRequest.of(pageNumber, size);
+
+        Specification<Event> specification = Specification.where(null);
+
+        if (categories != null && !categories.isEmpty()) {
+            specification = specification.and((root, query, criteriaBuilder) -> root.get("category").get("id").in(categories));
+        }
+
+        if (rangeStart != null) {
+            specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(root.get("eventDate"), rangeStart));
+        }
+
+        if (rangeEnd != null) {
+            specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
+        }
+
+        if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+            specification = specification.and((root, query, criteriaBuilder) -> (Predicate) criteriaBuilder.desc(root.get("rate")));
+        } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+            specification = specification.and((root, query, criteriaBuilder) -> (Predicate) criteriaBuilder.asc(root.get("rate")));
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameters.");
+        }
+
+        return eventRepository.findAll(specification, pageable).map(EventMapper::toEventRatedDto).getContent();
     }
 
     private void setViewsOfEvents(List<Event> events) {

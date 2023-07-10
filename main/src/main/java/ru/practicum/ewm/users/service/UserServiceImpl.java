@@ -5,11 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.ewm.events.enums.RateSort;
 import ru.practicum.ewm.users.dto.UserDto;
+import ru.practicum.ewm.users.dto.UserRateDto;
 import ru.practicum.ewm.users.mapper.UserMapper;
 import ru.practicum.ewm.users.model.User;
 import ru.practicum.ewm.users.repository.UserRepository;
@@ -49,5 +52,23 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
         userRepository.deleteById(user.getId());
+    }
+
+    @Override
+    public List<UserRateDto> getRatedUsers(Long userId, String rateSort, Integer from, Integer size) {
+        userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "You are not registered."));
+
+        int pageNumber = (int) Math.ceil((double) from / size);
+        Pageable pageable;
+
+        if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+            pageable = PageRequest.of(pageNumber, size, Sort.by("rate").descending());
+        } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+            pageable = PageRequest.of(pageNumber, size, Sort.by("rate").ascending());
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameter.");
+        }
+
+        return userRepository.findAll(pageable).map(UserMapper::toUserRateDto).getContent();
     }
 }

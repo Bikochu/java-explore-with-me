@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "users")
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(of = "email")
@@ -30,4 +31,13 @@ public class User {
     @Email(message = "Invalid email format")
     @Column(nullable = false, unique = true)
     String email;
+
+    @Column(name = "likes")
+    Integer likes;
+
+    @Column(name = "dislikes")
+    Integer dislikes;
+
+    @Column(name = "rate")
+    Double rate;
 }

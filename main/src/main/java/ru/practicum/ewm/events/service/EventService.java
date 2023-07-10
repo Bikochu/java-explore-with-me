@@ -27,4 +27,9 @@ public interface EventService {
                                     Integer from, Integer size);
 
     EventFullDto getEventById(Long eventId, HttpServletRequest request);
+
+    List<EventRatedDto> getRatedEvents(List<Long> categories, LocalDateTime rangeStart,
+                                       LocalDateTime rangeEnd, Boolean onlyAvailable,
+                                       String sort, String rateSort, Integer from, Integer size,
+                                       HttpServletRequest request);
 }
