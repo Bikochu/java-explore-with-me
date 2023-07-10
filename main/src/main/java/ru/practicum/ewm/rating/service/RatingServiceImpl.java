@@ -37,7 +37,6 @@ public class RatingServiceImpl implements RatingService {
     public RatingDto addRating(Long userId, Long eventId, Boolean likes) {
         User liker = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
-        ParticipationRequest request = requestRepository.findByRequesterIdAndEventId(userId, eventId);
         if (ratingRepository.existsByLikerIdAndEventId(userId, eventId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already rate this event");
         }
@@ -46,6 +45,8 @@ public class RatingServiceImpl implements RatingService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't rate your event.");
         }
 
+        ParticipationRequest request = requestRepository.findByRequesterIdAndEventId(userId, eventId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Request not found."));
         if (!request.getStatus().equals(RequestStatus.CONFIRMED)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't rate, because, you wasn't be there.");
         }
@@ -57,11 +58,11 @@ public class RatingServiceImpl implements RatingService {
                 .build();
 
         if (rating.getLikes()) {
-            event.setLikes(event.getLikes() + 1);
-            liker.setLikes(liker.getLikes() + 1);
+            event.setLikes(event.getLikes() != null ? (event.getLikes() + 1) : 1);
+            liker.setLikes(liker.getLikes() != null ? (liker.getLikes() + 1) : 1);
         } else {
-            event.setDislikes(event.getDislikes() + 1);
-            liker.setDislikes(liker.getDislikes() + 1);
+            event.setDislikes(event.getDislikes() != null ? event.getDislikes() + 1 : 1);
+            liker.setDislikes(liker.getDislikes() != null ? liker.getDislikes() + 1 : 1);
         }
 
         setRate(event, liker);
@@ -78,18 +79,18 @@ public class RatingServiceImpl implements RatingService {
         if (rating.getLikes().equals(likes)) {
             return RatingMapper.toRatingDto(rating);
         } else {
-            if (rating.getLikes()) {
-                event.setLikes(event.getLikes() + 1);
-                liker.setLikes(liker.getLikes() + 1);
+            if (likes) {
+                event.setLikes(event.getLikes() != null ? (event.getLikes() + 1) : 1);
+                liker.setLikes(liker.getLikes() != null ? (liker.getLikes() + 1) : 1);
                 event.setDislikes(event.getDislikes() - 1);
                 liker.setDislikes(liker.getDislikes() - 1);
             } else {
                 event.setLikes(event.getLikes() - 1);
                 liker.setLikes(liker.getLikes() - 1);
-                event.setDislikes(event.getDislikes() + 1);
-                liker.setDislikes(liker.getDislikes() + 1);
+                event.setDislikes(event.getDislikes() != null ? event.getDislikes() + 1 : 1);
+                liker.setDislikes(liker.getDislikes() != null ? liker.getDislikes() + 1 : 1);
             }
-
+            rating.setLikes(likes);
             setRate(event, liker);
 
             return RatingMapper.toRatingDto(ratingRepository.save(rating));
@@ -102,11 +103,11 @@ public class RatingServiceImpl implements RatingService {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
         Rating rating = ratingRepository.findByLikerIdAndEventId(userId, eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating not found."));
         if (rating.getLikes()) {
-            event.setLikes(event.getLikes() - 1);
-            liker.setLikes(liker.getLikes() - 1);
+            event.setLikes(event.getLikes() != null ? event.getLikes() - 1 : 0);
+            liker.setLikes(liker.getLikes() != null ? liker.getLikes() - 1 : 0);
         } else {
-            event.setDislikes(event.getDislikes() - 1);
-            liker.setDislikes(liker.getDislikes() - 1);
+            event.setDislikes(event.getDislikes() != null ? event.getDislikes() - 1 : 0);
+            liker.setDislikes(liker.getDislikes() != null ? liker.getDislikes() - 1 : 0);
         }
 
         setRate(event, liker);
@@ -115,12 +116,18 @@ public class RatingServiceImpl implements RatingService {
     }
 
     private void setRate(Event event, User liker) {
-        int totalEventVotes = event.getLikes() + event.getDislikes();
-        double rateEvent = (event.getLikes() * 10.0) / totalEventVotes;
+        int eventLike = event.getLikes() != null ? event.getLikes() : 0;
+        int eventDislike = event.getDislikes() != null ? event.getDislikes() : 0;
+
+        int totalEventVotes = eventLike + eventDislike;
+        double rateEvent = (eventLike * 10.0) / totalEventVotes;
         event.setRate(Math.round(rateEvent * 10) / 10.0);
 
-        int totalUserVotes = event.getLikes() + event.getDislikes();
-        double rateUser = (event.getLikes() * 10.0) / totalUserVotes;
+        int userLike = liker.getLikes() != null ? liker.getLikes() : 0;
+        int userDislike = liker.getDislikes() != null ? liker.getDislikes() : 0;
+
+        int totalUserVotes = userLike + userDislike;
+        double rateUser = (userLike * 10.0) / totalUserVotes;
         liker.setRate(Math.round(rateUser * 10) / 10.0);
 
         eventRepository.save(event);

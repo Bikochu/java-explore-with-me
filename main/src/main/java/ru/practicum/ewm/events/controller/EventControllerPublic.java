@@ -63,23 +63,12 @@ public class EventControllerPublic {
     }
 
     @GetMapping("/rating")
-    public List<EventRatedDto> getRatedEvents(
-                                              @RequestParam(required = false) List<Long> categories,
-                                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-                                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-                                              @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-                                              @RequestParam(defaultValue = "EVENT_DATE") String sort,
-                                              @RequestParam(defaultValue = "HIGH") String rateSort,
+    public List<EventRatedDto> getRatedEvents(@RequestParam(defaultValue = "HIGH") String rateSort,
                                               @RequestParam(value = "from", defaultValue = "0") @PositiveOrZero Integer from,
-                                              @RequestParam(value = "size", defaultValue = "10") @Positive Integer size,
-                                              HttpServletRequest request) {
+                                              @RequestParam(value = "size", defaultValue = "10") @Positive Integer size) {
 
-        log.info("Получаем запрос на получение списка рейтинга эвентов: categories={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, rateSort={} ,from={}, size={}",
-                categories, rangeStart, rangeEnd, onlyAvailable, sort, rateSort, from, size);
-        request.setAttribute("app_name", "main application");
-        log.info("Создаем {} запрос к {} от {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
-        hitClient.addHit(request);
-        List<EventRatedDto> ratedDtoList = eventService.getRatedEvents(categories, rangeStart, rangeEnd, onlyAvailable, sort, rateSort, from, size, request);
+        log.info("Получаем запрос на получение списка рейтинга эвентов: rateSort={} ,from={}, size={}", rateSort, from, size);
+        List<EventRatedDto> ratedDtoList = eventService.getRatedEvents(rateSort, from, size);
         log.info("Возвращаем {} элетент(а/ов).", ratedDtoList.size());
         return ratedDtoList;
     }

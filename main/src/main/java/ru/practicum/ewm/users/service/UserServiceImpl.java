@@ -69,6 +69,6 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameter.");
         }
 
-        return userRepository.findAll(pageable).map(UserMapper::toUserRateDto).getContent();
+        return userRepository.findAllByRateIsNotNull(pageable).map(UserMapper::toUserRateDto).getContent();
     }
 }
