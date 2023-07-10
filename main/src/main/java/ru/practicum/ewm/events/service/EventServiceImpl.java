@@ -31,7 +31,6 @@ import ru.practicum.ewm.stats.dto.StatsDto;
 import ru.practicum.ewm.users.model.User;
 import ru.practicum.ewm.users.repository.UserRepository;
 
-import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
