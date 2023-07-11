@@ -19,11 +19,11 @@ public interface EventService {
 
     List<EventShortDto> getEvents(String text, List<Long> categories, Boolean paid,
                                   LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                  Boolean onlyAvailable, String sort, Integer from, Integer size,
+                                  Boolean onlyAvailable, String sort, String rateSort, Integer from, Integer size,
                                   HttpServletRequest request);
 
     List<EventFullDto> searchEvents(List<Long> users, List<String> states, List<Long> categories,
-                                    LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                    LocalDateTime rangeStart, LocalDateTime rangeEnd, String rateSort,
                                     Integer from, Integer size);
 
     EventFullDto getEventById(Long eventId, HttpServletRequest request);

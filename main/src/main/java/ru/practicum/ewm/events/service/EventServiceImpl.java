@@ -191,7 +191,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getEvents(String text, List<Long> categories, Boolean paid,
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                         Boolean onlyAvailable, String sort, Integer from,
+                                         Boolean onlyAvailable, String sort, String rateSort, Integer from,
                                          Integer size, HttpServletRequest request) {
 
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
@@ -230,6 +230,16 @@ public class EventServiceImpl implements EventService {
                     criteriaBuilder.greaterThanOrEqualTo(root.get("participantLimit"), 0));
         }
 
+        if (rateSort != null) {
+            if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").descending());
+            } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").ascending());
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameters.");
+            }
+        }
+
         specification = specification.and((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("state"), StatePublic.PUBLISHED));
 
@@ -243,7 +253,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> searchEvents(List<Long> users, List<String> states, List<Long> categories,
-                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
+                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, String rateSort, Integer from, Integer size) {
 
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong timestamps of START or END.");
@@ -271,6 +281,16 @@ public class EventServiceImpl implements EventService {
 
         if (rangeEnd != null) {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
+        }
+
+        if (rateSort != null) {
+            if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").descending());
+            } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").ascending());
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameters.");
+            }
         }
 
         return eventRepository.findAll(specification, pageable).map(EventMapper::toEventFullDto).getContent();
