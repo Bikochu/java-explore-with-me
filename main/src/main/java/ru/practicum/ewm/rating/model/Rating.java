@@ -17,8 +17,8 @@ public class Rating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "liker_id", nullable = false)
-    Long likerId;
+    @Column(name = "user_id", nullable = false)
+    Long userId;
 
     @Column(name = "event_id", nullable = false)
     Long eventId;

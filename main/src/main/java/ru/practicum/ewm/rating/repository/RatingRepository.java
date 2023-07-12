@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, Long> {
 
-    Boolean existsByLikerIdAndEventId(Long userId, Long eventId);
+    Boolean existsByUserIdAndEventId(Long userId, Long eventId);
 
-    Optional<Rating> findByLikerIdAndEventId(Long userId, Long eventId);
+    Optional<Rating> findByUserIdAndEventId(Long userId, Long eventId);
 }

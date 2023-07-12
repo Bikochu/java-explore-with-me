@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 public class RatingDto {
     Long id;
 
-    Long likerId;
+    Long userId;
 
     Long eventId;
 
