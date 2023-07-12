@@ -37,48 +37,47 @@ public class RatingServiceImpl implements RatingService {
     public RatingDto addRating(Long userId, Long eventId, Boolean likes) {
         userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
+        Rating existRating = ratingRepository.findByUserIdAndEventId(userId, eventId).orElse(null);
         User initiator = event.getInitiator();
-
-        if (ratingRepository.existsByUserIdAndEventId(userId, eventId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already rate this event");
-        }
-
-        if (initiator.getId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't rate your event.");
-        }
-
-        ParticipationRequest request = requestRepository.findByRequesterIdAndEventId(userId, eventId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Request not found."));
-        if (!request.getStatus().equals(RequestStatus.CONFIRMED)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't rate, because, you wasn't be there.");
-        }
-
-        Rating rating = Rating.builder()
-                .userId(userId)
-                .eventId(eventId)
-                .likes(likes)
-                .build();
-
-        if (rating.getLikes()) {
-            event.setLikes(event.getLikes() != null ? (event.getLikes() + 1) : 1);
-            initiator.setLikes(initiator.getLikes() != null ? (initiator.getLikes() + 1) : 1);
+        if (existRating != null && likes != null) {
+            return updateRating(initiator, event, existRating, likes);
+        } else if (likes == null) {
+            if (existRating != null) {
+                deleteRating(initiator, event, existRating);
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating not found.");
+            }
         } else {
-            event.setDislikes(event.getDislikes() != null ? event.getDislikes() + 1 : 1);
-            initiator.setDislikes(initiator.getDislikes() != null ? initiator.getDislikes() + 1 : 1);
+            if (ratingRepository.existsByUserIdAndEventId(userId, eventId)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You already rate this event");
+            }
+            if (initiator.getId().equals(userId)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't rate your event.");
+            }
+            ParticipationRequest request = requestRepository.findByRequesterIdAndEventId(userId, eventId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Request not found."));
+            if (!request.getStatus().equals(RequestStatus.CONFIRMED)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't rate, because, you wasn't be there.");
+            }
+            Rating rating = Rating.builder()
+                    .userId(userId)
+                    .eventId(eventId)
+                    .likes(likes)
+                    .build();
+            if (rating.getLikes()) {
+                event.setLikes(event.getLikes() != null ? (event.getLikes() + 1) : 1);
+                initiator.setLikes(initiator.getLikes() != null ? (initiator.getLikes() + 1) : 1);
+            } else {
+                event.setDislikes(event.getDislikes() != null ? event.getDislikes() + 1 : 1);
+                initiator.setDislikes(initiator.getDislikes() != null ? initiator.getDislikes() + 1 : 1);
+            }
+            setRate(event, initiator);
+            return RatingMapper.toRatingDto(ratingRepository.save(rating));
         }
-
-        setRate(event, initiator);
-
-        return RatingMapper.toRatingDto(ratingRepository.save(rating));
+        return null;
     }
 
-    @Override
-    public RatingDto updateRating(Long userId, Long eventId, Boolean likes) {
-        userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
-        Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
-        Rating rating = ratingRepository.findByUserIdAndEventId(userId, eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating not found."));
-        User initiator = event.getInitiator();
-
+    private RatingDto updateRating(User initiator, Event event, Rating rating, Boolean likes) {
         if (rating.getLikes().equals(likes)) {
             return RatingMapper.toRatingDto(rating);
         } else {
@@ -100,12 +99,7 @@ public class RatingServiceImpl implements RatingService {
         }
     }
 
-    @Override
-    public void deleteRating(Long userId, Long eventId) {
-        userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
-        Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found."));
-        Rating rating = ratingRepository.findByUserIdAndEventId(userId, eventId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rating not found."));
-        User initiator = event.getInitiator();
+    private void deleteRating(User initiator, Event event, Rating rating) {
         if (rating.getLikes()) {
             event.setLikes(event.getLikes() != null ? event.getLikes() - 1 : 0);
             initiator.setLikes(initiator.getLikes() != null ? initiator.getLikes() - 1 : 0);
@@ -113,9 +107,7 @@ public class RatingServiceImpl implements RatingService {
             event.setDislikes(event.getDislikes() != null ? event.getDislikes() - 1 : 0);
             initiator.setDislikes(initiator.getDislikes() != null ? initiator.getDislikes() - 1 : 0);
         }
-
         setRate(event, initiator);
-
         ratingRepository.deleteById(rating.getId());
     }
 
@@ -141,7 +133,6 @@ public class RatingServiceImpl implements RatingService {
         } else {
             initiator.setRate(Math.round(rateUser * 10) / 10.0);
         }
-
 
         eventRepository.save(event);
         userRepository.save(initiator);

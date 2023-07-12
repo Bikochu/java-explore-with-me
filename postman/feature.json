@@ -797,17 +797,18 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Ответ должен содержать код статуса 409 и данные в формате json\", function () {\r",
-							"    pm.response.to.have.status(409);\r",
+							"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
 							"    pm.response.to.be.withBody;\r",
 							"    pm.response.to.be.json;\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Проверка запроса.\", function () {\r",
+							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
 							"    var jsonData = pm.response.json();\r",
-							"    pm.expect(jsonData.status, '\"status\" должен быть').to.eql(409);\r",
-							"    pm.expect(jsonData.error, '\"error\" должен быть').to.eql('Conflict');\r",
-							"    pm.expect(jsonData.path, '\"path\" должен быть').to.eql('/users/1/rating/2');\r",
+							"    pm.expect(jsonData.id, '\"id\" должен быть').to.not.eql(null);\r",
+							"    pm.expect(jsonData.userId, '\"userId\" должен быть').to.eql(1);\r",
+							"    pm.expect(jsonData.eventId, '\"eventId\" должен быть').to.eql(2);\r",
+							"    pm.expect(jsonData.likes, '\"likes\" должен быть').to.eql(true);\r",
 							"});"
 						],
 						"type": "text/javascript"
@@ -933,8 +934,8 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
+							"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
 							"    pm.response.to.be.withBody;\r",
 							"    pm.response.to.be.json;\r",
 							"});\r",
@@ -952,7 +953,7 @@
 				}
 			],
 			"request": {
-				"method": "PATCH",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/users/:userId/rating/:eventId?likes=true",
@@ -1051,8 +1052,8 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
+							"pm.test(\"Ответ должен содержать код статуса 201 и данные в формате json\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
 							"    pm.response.to.be.withBody;\r",
 							"    pm.response.to.be.json;\r",
 							"});\r",
@@ -1070,7 +1071,7 @@
 				}
 			],
 			"request": {
-				"method": "PATCH",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/users/:userId/rating/:eventId?likes=false",
@@ -1128,7 +1129,7 @@
 				}
 			],
 			"request": {
-				"method": "PATCH",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/users/:userId/rating/:eventId?likes=true",
@@ -1186,7 +1187,7 @@
 				}
 			],
 			"request": {
-				"method": "PATCH",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/users/:userId/rating/:eventId?likes=true",
@@ -1678,7 +1679,7 @@
 				}
 			],
 			"request": {
-				"method": "DELETE",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/users/:userId/rating/:eventId",
@@ -1730,7 +1731,7 @@
 				}
 			],
 			"request": {
-				"method": "DELETE",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/users/:userId/rating/:eventId",
