@@ -70,4 +70,13 @@ public class Event {
 
     @Column
     Long views;
+
+    @Column
+    Integer likes;
+
+    @Column
+    Integer dislikes;
+
+    @Column
+    Double rate;
 }

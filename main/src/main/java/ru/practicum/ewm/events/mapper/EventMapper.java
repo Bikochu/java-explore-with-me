@@ -2,6 +2,7 @@ package ru.practicum.ewm.events.mapper;
 
 import ru.practicum.ewm.categories.mapper.CategoryMapper;
 import ru.practicum.ewm.events.dto.EventFullDto;
+import ru.practicum.ewm.events.dto.EventRatedDto;
 import ru.practicum.ewm.events.dto.EventShortDto;
 import ru.practicum.ewm.events.dto.NewEventDto;
 import ru.practicum.ewm.events.model.Event;
@@ -54,6 +55,22 @@ public class EventMapper {
                 .initiator(UserMapper.toUserShortDto(event.getInitiator()))
                 .paid(event.getPaid())
                 .title(event.getTitle())
+                .views(event.getViews())
+                .build();
+    }
+
+    public static EventRatedDto toEventRatedDto(Event event) {
+        return EventRatedDto.builder()
+                .id(event.getId())
+                .annotation(event.getAnnotation())
+                .category(CategoryMapper.toCategoryDto(event.getCategory()))
+                .description(event.getDescription())
+                .eventDate(event.getEventDate())
+                .location(LocationMapper.toLocationDto(event.getLocation()))
+                .title(event.getTitle())
+                .likes(event.getLikes())
+                .dislikes(event.getDislikes())
+                .rate(event.getRate())
                 .views(event.getViews())
                 .build();
     }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
 import ru.practicum.ewm.categories.service.CategoryService;
 import ru.practicum.ewm.events.dto.*;
+import ru.practicum.ewm.events.enums.RateSort;
 import ru.practicum.ewm.events.enums.StateAdmin;
 import ru.practicum.ewm.events.enums.StatePrivate;
 import ru.practicum.ewm.events.enums.StatePublic;
@@ -189,7 +191,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getEvents(String text, List<Long> categories, Boolean paid,
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                         Boolean onlyAvailable, String sort, Integer from,
+                                         Boolean onlyAvailable, String sort, String rateSort, Integer from,
                                          Integer size, HttpServletRequest request) {
 
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
@@ -228,6 +230,16 @@ public class EventServiceImpl implements EventService {
                     criteriaBuilder.greaterThanOrEqualTo(root.get("participantLimit"), 0));
         }
 
+        if (rateSort != null) {
+            if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").descending());
+            } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").ascending());
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameters.");
+            }
+        }
+
         specification = specification.and((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("state"), StatePublic.PUBLISHED));
 
@@ -241,7 +253,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> searchEvents(List<Long> users, List<String> states, List<Long> categories,
-                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
+                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, String rateSort, Integer from, Integer size) {
 
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong timestamps of START or END.");
@@ -271,6 +283,16 @@ public class EventServiceImpl implements EventService {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
         }
 
+        if (rateSort != null) {
+            if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").descending());
+            } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+                pageable = PageRequest.of(pageNumber, size, Sort.by("rate").ascending());
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameters.");
+            }
+        }
+
         return eventRepository.findAll(specification, pageable).map(EventMapper::toEventFullDto).getContent();
     }
 
@@ -283,6 +305,23 @@ public class EventServiceImpl implements EventService {
         setViewsOfEvents(List.of(event));
         event.setViews(event.getViews() + 1);
         return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public List<EventRatedDto> getRatedEvents(String rateSort, Integer from, Integer size) {
+
+        int pageNumber = (int) Math.ceil((double) from / size);
+        Pageable pageable;
+
+        if (RateSort.valueOf(rateSort).equals(RateSort.HIGH)) {
+            pageable = PageRequest.of(pageNumber, size, Sort.by("rate").descending());
+        } else if (RateSort.valueOf(rateSort).equals(RateSort.LOW)) {
+            pageable = PageRequest.of(pageNumber, size, Sort.by("rate").ascending());
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sorting parameters.");
+        }
+
+        return eventRepository.findAllByRateIsNotNull(pageable).map(EventMapper::toEventRatedDto).getContent();
     }
 
     private void setViewsOfEvents(List<Event> events) {
